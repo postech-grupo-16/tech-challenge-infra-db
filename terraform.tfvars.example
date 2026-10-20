@@ -1,0 +1,9 @@
+# Copie para terraform.tfvars (gitignored) e preencha com valores reais.
+# NUNCA comite o terraform.tfvars.
+#
+# Alternativa sem arquivo: exporte como variaveis de ambiente antes do apply
+#   export TF_VAR_db_user=tech_challenge_admin
+#   export TF_VAR_db_pass=...
+
+db_user = "tech_challenge_admin"
+db_pass = "troque-por-uma-senha-real-com-pelo-menos-8-caracteres"
