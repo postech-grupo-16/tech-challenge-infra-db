@@ -1,11 +1,11 @@
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.project_name}-db-subnet-group"
+  name       = "${local.name_prefix}-db-subnet-group"
   subnet_ids = local.subnet_ids
   tags       = var.tags
 }
 
 resource "aws_db_instance" "main" {
-  identifier     = "${var.project_name}-db"
+  identifier     = "${local.name_prefix}-db"
   engine         = "postgres"
   engine_version = var.db_engine_version
 

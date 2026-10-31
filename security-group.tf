@@ -4,7 +4,7 @@
 # do Postgres. "publicly_accessible = false" (ver rds.tf) ja impede qualquer
 # IP publico de alcancar a instancia.
 resource "aws_security_group" "rds" {
-  name        = "${var.project_name}-rds"
+  name        = "${local.name_prefix}-rds"
   description = "Permite Postgres (5432) apenas de dentro da VPC do Tech Challenge"
   vpc_id      = local.vpc_id
 
