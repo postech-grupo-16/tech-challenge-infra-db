@@ -1,16 +1,16 @@
-# Le a rede provisionada por tech-challenge-infra-k8s via SSM Parameter
-# Store, sem acoplar o Terraform state dos dois repositorios (ver
-# ssm-outputs.tf naquele repo).
+# Le a rede provisionada por tech-challenge-infra-k8s (do mesmo ambiente) via
+# SSM Parameter Store, sem acoplar o Terraform state dos dois repositorios
+# (ver ssm-outputs.tf naquele repo).
 data "aws_ssm_parameter" "vpc_id" {
-  name = "/tech-challenge/vpc_id"
+  name = "${local.ssm_prefix}/vpc_id"
 }
 
 data "aws_ssm_parameter" "vpc_cidr" {
-  name = "/tech-challenge/vpc_cidr"
+  name = "${local.ssm_prefix}/vpc_cidr"
 }
 
 data "aws_ssm_parameter" "subnet_ids" {
-  name = "/tech-challenge/subnet_ids"
+  name = "${local.ssm_prefix}/subnet_ids"
 }
 
 locals {

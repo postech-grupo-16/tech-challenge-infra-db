@@ -1,8 +1,15 @@
 name: Terraform Infra (RDS)
 
+# Dois ambientes, escolhidos pela branch:
+#   main    -> production (environments/production.*, secrets TF_VAR_DB_USER/TF_VAR_DB_PASS)
+#   homolog -> homolog    (environments/homolog.*, secrets TF_VAR_DB_USER_HOMOLOG/TF_VAR_DB_PASS_HOMOLOG)
+# Em PR so roda o plan (contra o ambiente da branch de destino); o apply
+# acontece no push (merge do PR) ou via dispatch manual.
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "homolog" ]
+  pull_request:
+    branches: [ "main", "homolog" ]
   workflow_dispatch:
     inputs:
       action:
@@ -19,26 +26,32 @@ permissions:
   contents: read
 
 concurrency:
-  group: terraform-infra-db
+  group: terraform-infra-db-${{ github.base_ref || github.ref_name }}
   cancel-in-progress: false
 
 env:
   TF_VERSION: "1.9.8"
   AWS_REGION: us-east-1
+  # base_ref = branch de destino do PR; ref_name = branch do push/dispatch.
+  DEPLOY_ENV: ${{ (github.base_ref || github.ref_name) == 'homolog' && 'homolog' || 'production' }}
+  TF_VAR_db_user: ${{ secrets[(github.base_ref || github.ref_name) == 'homolog' && 'TF_VAR_DB_USER_HOMOLOG' || 'TF_VAR_DB_USER'] }}
+  TF_VAR_db_pass: ${{ secrets[(github.base_ref || github.ref_name) == 'homolog' && 'TF_VAR_DB_PASS_HOMOLOG' || 'TF_VAR_DB_PASS'] }}
 
 jobs:
   plan:
     name: Terraform Plan
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && (inputs.action == 'plan' || inputs.action == 'apply' || inputs.action == 'destroy'))
     runs-on: ubuntu-latest
-
-    env:
-      TF_VAR_db_user: ${{ secrets.TF_VAR_DB_USER }}
-      TF_VAR_db_pass: ${{ secrets.TF_VAR_DB_PASS }}
 
     steps:
       - name: Checkout do Código
         uses: actions/checkout@v4
+
+      - name: Verificar secrets do ambiente
+        run: |
+          if [ -z "$TF_VAR_db_user" ] || [ -z "$TF_VAR_db_pass" ]; then
+            echo "::error::Secrets do banco nao configurados para '$DEPLOY_ENV' (em homolog: TF_VAR_DB_USER_HOMOLOG e TF_VAR_DB_PASS_HOMOLOG)"
+            exit 1
+          fi
 
       - name: Configurar Credenciais AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -58,14 +71,14 @@ jobs:
         continue-on-error: true
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config="environments/$DEPLOY_ENV.s3.tfbackend"
 
       - name: Terraform Validate
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: terraform plan -input=false -no-color -var-file="environments/$DEPLOY_ENV.tfvars" -out=tfplan
         continue-on-error: true
 
       - name: Falhar se o Plan deu erro
@@ -77,11 +90,7 @@ jobs:
     needs: plan
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.action == 'apply')
     runs-on: ubuntu-latest
-    environment: production
-
-    env:
-      TF_VAR_db_user: ${{ secrets.TF_VAR_DB_USER }}
-      TF_VAR_db_pass: ${{ secrets.TF_VAR_DB_PASS }}
+    environment: ${{ github.ref_name == 'homolog' && 'homolog' || 'production' }}
 
     steps:
       - name: Checkout do Código
@@ -101,10 +110,10 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config="environments/$DEPLOY_ENV.s3.tfbackend"
 
       - name: Terraform Apply
-        run: terraform apply -input=false -auto-approve
+        run: terraform apply -input=false -auto-approve -var-file="environments/$DEPLOY_ENV.tfvars"
 
       - name: Mostrar Outputs
         run: terraform output
@@ -114,11 +123,7 @@ jobs:
     needs: plan
     if: github.event_name == 'workflow_dispatch' && inputs.action == 'destroy'
     runs-on: ubuntu-latest
-    environment: production
-
-    env:
-      TF_VAR_db_user: ${{ secrets.TF_VAR_DB_USER }}
-      TF_VAR_db_pass: ${{ secrets.TF_VAR_DB_PASS }}
+    environment: ${{ github.ref_name == 'homolog' && 'homolog' || 'production' }}
 
     steps:
       - name: Checkout do Código
@@ -138,7 +143,7 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -backend-config="environments/$DEPLOY_ENV.s3.tfbackend"
 
       - name: Terraform Destroy
-        run: terraform destroy -input=false -auto-approve
+        run: terraform destroy -input=false -auto-approve -var-file="environments/$DEPLOY_ENV.tfvars"
