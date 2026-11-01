@@ -34,10 +34,12 @@ Precisa que o [tech-challenge-infra-k8s](https://github.com/Gabrielfsg/tech-chal
 cp terraform.tfvars.example terraform.tfvars
 # edite terraform.tfvars com usuário/senha reais
 
-terraform init
-terraform plan
-terraform apply
+terraform init -backend-config=environments/production.s3.tfbackend
+terraform plan -var-file=environments/production.tfvars
+terraform apply -var-file=environments/production.tfvars
 ```
+
+> **Ambientes:** troque `production` por `homolog` para operar a stack de homologação (nomes com sufixo `-homolog`, parâmetros SSM em `/tech-challenge-homolog/*`, state em outra key do mesmo bucket). Ao alternar entre ambientes na mesma pasta, rode `terraform init -reconfigure -backend-config=...`.
 
 ```bash
 terraform output jdbc_url   # URL JDBC pronta para SPRING_DATASOURCE_URL
@@ -53,7 +55,7 @@ terraform destroy
 
 ## CI/CD
 
-[`.github/workflows/terraform.yml`](.github/workflows/terraform.yml): `plan` em todo push/dispatch, `apply` automático em push na `main`, `destroy` manual via `workflow_dispatch`. Requer os secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` (credenciais do AWS Academy Learner Lab) e `TF_VAR_DB_USER`, `TF_VAR_DB_PASS` (credenciais do banco).
+[`.github/workflows/terraform.yml`](.github/workflows/terraform.yml): `plan` em todo push/PR/dispatch, `apply` automático em push na `main` (produção) ou na `homolog` (homologação), `destroy` manual via `workflow_dispatch` (o ambiente é o da branch escolhida). Requer os secrets `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN` (credenciais do AWS Academy Learner Lab) e `TF_VAR_DB_USER`, `TF_VAR_DB_PASS` (credenciais do banco de produção) / `TF_VAR_DB_USER_HOMOLOG`, `TF_VAR_DB_PASS_HOMOLOG` (homologação).
 
 A branch `main` é protegida — merges só via Pull Request.
 
