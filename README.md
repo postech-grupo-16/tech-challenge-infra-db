@@ -110,8 +110,8 @@ O workflow confirma plan em PR para `main` e `homolog`, apply após push nessas 
 ## Links
 
 - Swagger local: <http://localhost:8080/swagger-ui.html>
-- Coleções [Postman](postman/): [acompanhamento](postman/acompanhamento.collection.json), [atendimento](postman/atendimento.collection.json), [estoque](postman/estoque.collection.json) e [coleção completa](postman/Tech-Challenge-Completa-Production.collection.json).
-- [Documentação arquitetural](docs/README.md)
+- Coleções [Postman]([postman/](https://github.com/postech-grupo-16/tech-challenge-app/tree/main/postman): [acompanhamento](https://github.com/postech-grupo-16/tech-challenge-app/blob/main/postman/acompanhamento.collection.json), [atendimento](https://github.com/postech-grupo-16/tech-challenge-app/blob/main/postman/atendimento.collection.json), [estoque](https://github.com/postech-grupo-16/tech-challenge-app/blob/main/postman/estoque.collection.json) e [coleção completa](https://github.com/postech-grupo-16/tech-challenge-app/blob/main/postman/Tech-Challenge-Completa-Production.collection.json).
+- [Documentação arquitetural](https://github.com/postech-grupo-16/tech-challenge-app/tree/main/docs#readme)
 - [tech-challenge-app](https://github.com/postech-grupo-16/tech-challenge-app)
 - [tech-challenge-infra-k8s](https://github.com/postech-grupo-16/tech-challenge-infra-k8s)
 - [tech-challenge-auth-lambda](https://github.com/postech-grupo-16/tech-challenge-auth-lambda)
